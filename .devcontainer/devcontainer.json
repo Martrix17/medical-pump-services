@@ -1,0 +1,28 @@
+{
+    "name": "medical-pump-services devcontainer",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "remoteUser": "developer",
+    "workspaceFolder": "/workspace",
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind"
+    ],
+    "customizations": {
+        "vscode": {   
+            "settings": {
+                "editor.formatOnSave": true,
+                "C_Cpp.formatting": "clangFormat",
+                "C_Cpp.clang_format_style": "file",
+                "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+                "C_Cpp.codeAnalysis.clangTidy.path": "/usr/bin/clang-tidy"
+            },        
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools-extension-pack"
+            ]
+        }
+    }
+}

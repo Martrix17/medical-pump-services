@@ -1,0 +1,26 @@
+# CMake
+build/
+cmake-build-*/
+
+# Conan
+.conan/
+conan_home/
+
+# IDE
+.vscode/
+.idea/
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+*.gcda
+*.gcno
+*.gcov
