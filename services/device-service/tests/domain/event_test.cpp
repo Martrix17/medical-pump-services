@@ -27,13 +27,13 @@ TEST(DeviceEventTest, AlarmToDeviceEvent) {
     DeviceEvent event = alarm;
 
     EXPECT_TRUE(std::holds_alternative<Alarm>(event));
-    EXPECT_EQ(std::get<Alarm>(event).severity(), severity); 
+    EXPECT_EQ(std::get<Alarm>(event).severity(), severity);
 }
 
-// TEST(DeviceEventTest, DeviceStatusToDeviceEvent) {
-//     DeviceState state = DeviceState::Connected;
+TEST(DeviceEventTest, DeviceStatusToDeviceEvent) {
+    DeviceStatus state = DeviceStatus::Connected;
 
-//     DeviceEvent event = state;
+    DeviceEvent event = state;
 
-//     EXPECT_TRUE(std::holds_alternative<Alarm>(event));    
-// }
+    EXPECT_TRUE(std::holds_alternative<DeviceStatus>(event));
+}

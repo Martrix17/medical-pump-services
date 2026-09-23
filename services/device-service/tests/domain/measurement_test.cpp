@@ -1,6 +1,6 @@
-#include <limits>
-
 #include <gtest/gtest.h>
+
+#include <limits>
 
 #include "device/domain/measurement.hpp"
 
@@ -18,28 +18,38 @@ TEST(MeasurementConstructorTest, ValidMeasurement) {
     EXPECT_EQ(measurement.timestamp(), timestamp);
 }
 
-TEST(MeasurmentQualityTest, InvalidFlowRate) {
+TEST(MeasurmentQualityTest, InfiniteFlowRate) {
     DeviceID deviceID{"device-1"};
     double pressure = 2.0;
-    Timestamp timestamp = Timestamp::clock::now();    
+    Timestamp timestamp = Timestamp::clock::now();
     double flowRate = std::numeric_limits<double>::infinity();
 
     EXPECT_THROW((Measurement{deviceID, flowRate, pressure, timestamp}), std::invalid_argument);
-
-    double flowRate2 = std::numeric_limits<double>::quiet_NaN();
-
-    EXPECT_THROW((Measurement{deviceID, flowRate2, pressure, timestamp}), std::invalid_argument);
 }
 
-TEST(MeasurmentQualityTest, InvalidPressure) {
+TEST(MeasurmentQualityTest, NaNFlowRate) {
+    DeviceID deviceID{"device-1"};
+    double pressure = 2.0;
+    Timestamp timestamp = Timestamp::clock::now();
+    double flowRate = std::numeric_limits<double>::quiet_NaN();
+
+    EXPECT_THROW((Measurement{deviceID, flowRate, pressure, timestamp}), std::invalid_argument);
+}
+
+TEST(MeasurmentQualityTest, InfinitePressure) {
     DeviceID deviceID{"device-1"};
     double flowRate = 1.0;
-    Timestamp timestamp = Timestamp::clock::now();    
+    Timestamp timestamp = Timestamp::clock::now();
     double pressure = std::numeric_limits<double>::infinity();
 
     EXPECT_THROW((Measurement{deviceID, flowRate, pressure, timestamp}), std::invalid_argument);
+}
 
-    double pressure2 = std::numeric_limits<double>::quiet_NaN();
+TEST(MeasurmentQualityTest, NaNPressure) {
+    DeviceID deviceID{"device-1"};
+    double flowRate = 1.0;
+    Timestamp timestamp = Timestamp::clock::now();
+    double pressure = std::numeric_limits<double>::quiet_NaN();
 
-    EXPECT_THROW((Measurement{deviceID, flowRate, pressure2, timestamp}), std::invalid_argument);
+    EXPECT_THROW((Measurement{deviceID, flowRate, pressure, timestamp}), std::invalid_argument);
 }

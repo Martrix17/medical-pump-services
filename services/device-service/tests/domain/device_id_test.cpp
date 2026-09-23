@@ -11,8 +11,11 @@ TEST(DeviceIDConstructorTest, EmptyDeviceID) {
     EXPECT_THROW(DeviceID{""}, std::invalid_argument);
 }
 
-TEST(DeviceIDConstructorTest, WhitespaceOnlyDeviceID) {
+TEST(DeviceIDConstructorTest, SpaceOnlyDeviceID) {
     EXPECT_THROW(DeviceID{"   "}, std::invalid_argument);
+}
+
+TEST(DeviceIDConstructorTest, TabAndNewlineOnlyDeviceID) {
     EXPECT_THROW(DeviceID{"\t\n "}, std::invalid_argument);
 }
 

@@ -1,6 +1,6 @@
-#include <limits>
-
 #include <gtest/gtest.h>
+
+#include <limits>
 
 #include "device/domain/alarm.hpp"
 
