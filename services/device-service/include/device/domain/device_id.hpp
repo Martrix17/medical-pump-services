@@ -3,8 +3,7 @@
 
 #include <string>
 
-class DeviceID
-{
+class DeviceID {
   public:
     explicit DeviceID(std::string value);
 
@@ -16,4 +15,4 @@ class DeviceID
     std::string value_;
 };
 
-#endif // DEVICE_HPP
+#endif  // DEVICE_HPP

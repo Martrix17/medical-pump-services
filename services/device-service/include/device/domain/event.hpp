@@ -7,6 +7,6 @@
 #include "measurement.hpp"
 #include "status.hpp"
 
-using DeviceEvent = std::variant<Measurement, Alarm, DeviceState>;
+using DeviceEvent = std::variant<Measurement, Alarm, DeviceStatus>;
 
-#endif // EVENT_HPP
+#endif  // EVENT_HPP
