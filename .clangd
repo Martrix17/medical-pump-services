@@ -1,0 +1,25 @@
+CompileFlags:
+  CompilationDatabase: build/debug
+  Add: 
+    - -std=c++20
+
+# IntelliSense and diagnostics
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add: 
+      - modernize-*
+      - performance-*
+      - readability-*
+      - bugprone-*
+    Remove:
+      - modernize-use-trailing-return-type
+      - readability-identifier-length
+
+# Code completion settings
+Completion:
+  AllScopes: Yes
+
+# Index settings for better performance
+Index:
+  Background: Build

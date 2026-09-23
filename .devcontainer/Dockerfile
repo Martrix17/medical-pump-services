@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     clang-format \
     clang-tidy \
+    clangd \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,9 +29,26 @@ RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/nul
 
 ENV PATH="/opt/cmake/bin:${PATH}"
 
-RUN useradd -m -s /bin/bash developer \
-    && usermod -aG sudo developer \
-    && echo "developer ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/developer
+
+# RUN useradd -m -s /bin/bash developer && \
+#     echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+#     mkdir -p /workspace && \
+#     chown -R developer:developer /workspace
+
+ARG USERNAME=developer
+ARG USER_UID=1001
+ARG USER_GID=1001
+
+RUN groupadd --gid ${USER_GID} ${USERNAME} \
+    && useradd --uid ${USER_UID} \
+               --gid ${USER_GID} \
+               --create-home \
+               --shell /bin/bash \
+               ${USERNAME} \
+    && usermod -aG sudo ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" \
+       > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 RUN python3 -m venv /opt/venv
 

@@ -5,24 +5,47 @@
         "context": ".."
     },
     "remoteUser": "developer",
+    "updateRemoteUserUID": true,
     "workspaceFolder": "/workspace",
     "mounts": [
         "source=${localWorkspaceFolder},target=/workspace,type=bind"
     ],
     "customizations": {
-        "vscode": {   
-            "settings": {
-                "editor.formatOnSave": true,
-                "C_Cpp.formatting": "clangFormat",
-                "C_Cpp.clang_format_style": "file",
-                "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-                "C_Cpp.codeAnalysis.clangTidy.path": "/usr/bin/clang-tidy"
-            },        
+        "vscode": {
             "extensions": [
-                "ms-vscode.cpptools",
-                "ms-vscode.cmake-tools",
-                "ms-vscode.cpptools-extension-pack"
-            ]
+                "llvm-vs-code-extensions.vscode-clangd",
+                "ms-vscode.cmake-tools"
+            ],
+            "settings": {
+                "C_Cpp.intelliSenseEngine": "disabled",
+                "[cpp]": {
+                    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+                    "editor.formatOnSave": true
+                },
+                "[c]": {
+                    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+                    "editor.formatOnSave": true
+                }
+            }
         }
+        // "vscode": {
+        //     "settings": {
+        //         "editor.formatOnSave": true,
+        //         "C_Cpp.formatting": "clangFormat",
+        //         "C_Cpp.clang_format_style": "file",
+        //         "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+        //         "C_Cpp.codeAnalysis.clangTidy.path": "/usr/bin/clang-tidy",
+        //         "[cpp]": {
+        //             "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        //             "editor.formatOnSave": true
+        //         },
+        //     },
+        //     "extensions": [
+        //         "llvm-vs-code-extensions.vscode-clangd",
+        //         // "ms-vscode.cpptools",
+        //         // "ms-vscode.cpptools-extension-pack",
+        //         "ms-vscode.cmake-tools"
+        //     ]
+        // }
     }
 }

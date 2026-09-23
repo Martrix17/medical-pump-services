@@ -1,7 +1,5 @@
 BasedOnStyle: LLVM
-
 Language: Cpp
-
 Standard: c++20
 
 IndentWidth: 4
@@ -10,8 +8,28 @@ UseTab: Never
 
 ColumnLimit: 100
 
-BreakBeforeBraces: Allman
-
 PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
 
+BreakBeforeBraces: Attach
 AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortBlocksOnASingleLine: Never
+
+IndentCaseLabels: true
+NamespaceIndentation: None
+
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+
+IncludeCategories:
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^<.*>'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
+
+SpacesBeforeTrailingComments: 2
+MaxEmptyLinesToKeep: 1
