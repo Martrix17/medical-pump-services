@@ -3,6 +3,8 @@ find_package(GTest REQUIRED)
 add_executable(device-service-tests 
     smoke_test.cpp
 
+    adapter/pump_a_adapter_test.cpp
+
     domain/device_id_test.cpp
     domain/measurement_test.cpp
     domain/alarm_test.cpp
