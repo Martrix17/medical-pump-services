@@ -9,19 +9,24 @@ std::optional<PumpAMessage> PumpAParser::parse(std::string_view rawMessage) {
         return std::nullopt;
     }
 
-    nlohmann::json jsonMessage = nlohmann::json::parse(rawMessage);
+    try {
+        nlohmann::json jsonMessage = nlohmann::json::parse(rawMessage);
 
-    PumpAMessage parsedMessage{.deviceID = DeviceID(jsonMessage.at("device_id").get<std::string>()),
-                               .timestamp = jsonMessage.at("timestamp").get<std::string>(),
-                               .status = jsonMessage.at("status").get<std::string>(),
-                               .flowRate = jsonMessage.at("flow_rate").get<double>(),
-                               .pressure = jsonMessage.at("pressure").get<double>()};
+        PumpAMessage parsedMessage{.deviceID =
+                                       DeviceID(jsonMessage.at("device_id").get<std::string>()),
+                                   .timestamp = jsonMessage.at("timestamp").get<std::string>(),
+                                   .status = jsonMessage.at("status").get<std::string>(),
+                                   .flowRate = jsonMessage.at("flow_rate").get<double>(),
+                                   .pressure = jsonMessage.at("pressure").get<double>()};
 
-    if (jsonMessage.contains("alarm") && !jsonMessage.at("alarm").is_null()) {
-        parsedMessage.alarm =
-            PumpAAlarm{.type = jsonMessage.at("alarm").at("type").get<std::string>(),
-                       .severity = jsonMessage.at("alarm").at("severity").get<std::string>()};
+        if (jsonMessage.contains("alarm") && !jsonMessage.at("alarm").is_null()) {
+            parsedMessage.alarm =
+                PumpAAlarm{.type = jsonMessage.at("alarm").at("type").get<std::string>(),
+                           .severity = jsonMessage.at("alarm").at("severity").get<std::string>()};
+        }
+
+        return parsedMessage;
+    } catch (const nlohmann::json::exception&) {
+        return std::nullopt;
     }
-
-    return parsedMessage;
 }
