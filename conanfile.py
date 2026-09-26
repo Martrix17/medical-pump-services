@@ -12,7 +12,8 @@ class MedicalPumpServicesConan(ConanFile):
     def requirements(self):
         self.requires("gtest/1.14.0")
         self.requires("nlohmann_json/3.11.3")
-
+        self.requires("asio/1.36.0")
+        
     def layout(self):
         self.folders.generators = "generators"
         

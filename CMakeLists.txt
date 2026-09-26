@@ -14,10 +14,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_TESTING "Build tests" ON)
 
 add_subdirectory(services/device-service)
+add_subdirectory(simulators/pump-a-simulator)
 
 if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(services/device-service/tests)
+    add_subdirectory(simulators/pump-a-simulator/tests)
 endif()
 
 option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation" OFF)

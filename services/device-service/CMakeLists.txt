@@ -35,5 +35,4 @@ add_executable(device-service
 target_link_libraries(device-service
     PRIVATE
         device-service-lib
-        # nlohmann_json::nlohmann_json
 )
