@@ -12,7 +12,7 @@ void TcpServer::start() {
 }
 
 void TcpServer::accept() {
-    acceptor_.async_accept([this](std::error_code ec, tcp::socket socket) {
+    acceptor_.async_accept([this](const std::error_code& ec, tcp::socket socket) {
         if (!ec) {
             std::cout << "Client connected: " << socket.remote_endpoint() << "\n";
             std::make_shared<Session>(std::move(socket), generator_)->start();

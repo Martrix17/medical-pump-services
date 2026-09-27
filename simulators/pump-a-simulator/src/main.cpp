@@ -1,5 +1,6 @@
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
+#include <charconv>
 #include <exception>
 #include <iostream>
 
@@ -7,19 +8,27 @@
 #include "tcp_server.hpp"
 
 int main(int argc, char** argv) {
-    try {
-        if (argc != 2) {
-            std::cerr << "Usage: " << argv[0] << " <port>\n";
-            return 1;
-        }
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <port>\n";
+        return 1;
+    }
 
+    unsigned short port{};
+    const std::string_view portArg = argv[1];
+    auto [ptr, ec] = std::from_chars(portArg.data(), portArg.data() + portArg.size(), port);
+    if (ec != std::errc{} || ptr != portArg.data() + portArg.size()) {
+        std::cerr << "Invalid port: " << argv[1] << '\n';
+        return 1;
+    }
+
+    try {
         asio::io_context ioContext;
         MessageGenerator generator{"pump-a-001"};
 
-        TcpServer server(ioContext, static_cast<unsigned short>(std::atoi(argv[1])), generator);
+        TcpServer server(ioContext, port, generator);
         server.start();
 
-        std::cout << "Server listening on port: " << argv[1] << "\n";
+        std::cout << "Server listening on port: " << port << "\n";
         ioContext.run();
 
     } catch (const std::exception& e) {

@@ -19,7 +19,7 @@ void Session::sendMessage() {
     auto message = std::make_shared<std::string>(generator_.generate());
 
     asio::async_write(socket_, asio::buffer(*message),
-                      [this, self, message](std::error_code ec, std::size_t /*length*/) {
+                      [this, self, message](const std::error_code& ec, std::size_t /*length*/) {
                           if (ec) {
                               std::cerr << "Session write failed: " << ec.message() << '\n';
                               return;
