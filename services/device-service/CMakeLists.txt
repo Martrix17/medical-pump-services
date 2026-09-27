@@ -1,4 +1,5 @@
 find_package(nlohmann_json REQUIRED)
+find_package(asio REQUIRED)
 
 add_library(device-service-lib
     src/domain/device_id.cpp
@@ -11,6 +12,8 @@ add_library(device-service-lib
     src/common/alarm_parser.cpp
     src/common/device_status_parser.cpp
     src/common/timestamp_parser.cpp
+
+    src/concurrency/worker.cpp
 )
 
 target_include_directories(device-service-lib
@@ -30,9 +33,11 @@ target_link_libraries(device-service-lib
 
 add_executable(device-service
     src/main.cpp
+    src/communication/tcp_client.cpp
 )
 
 target_link_libraries(device-service
     PRIVATE
         device-service-lib
+        asio::asio
 )
