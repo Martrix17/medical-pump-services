@@ -9,10 +9,11 @@
 #include "device/domain/measurement.hpp"
 #include "device/domain/status.hpp"
 
-class InterfaceDeviceAdapter {
+class IDeviceAdapter {
   public:
-    virtual ~InterfaceDeviceAdapter() = default;
+    virtual ~IDeviceAdapter() = default;
 
+    virtual bool processMessage(std::string_view rawMessage) = 0;
     virtual DeviceID getDeviceID() = 0;
     virtual DeviceStatus getStatus() = 0;
     virtual std::vector<Alarm> getAlarms() = 0;

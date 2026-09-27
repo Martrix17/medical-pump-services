@@ -4,16 +4,12 @@
 #include "interface_device_adapter.hpp"
 #include "pump_a_message.hpp"
 
-class PumpAAdapter : public InterfaceDeviceAdapter {
+class PumpAAdapter : public IDeviceAdapter {
   public:
-    bool processMessage(std::string_view rawMessage);
-
+    bool processMessage(std::string_view rawMessage) override;
     DeviceID getDeviceID() override;
-
     DeviceStatus getStatus() override;
-
     std::vector<Alarm> getAlarms() override;
-
     std::optional<Measurement> getMeasurement() override;
 
   private:
