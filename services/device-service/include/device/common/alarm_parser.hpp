@@ -3,7 +3,7 @@
 
 #include <string_view>
 
-#include "device/domain/status.hpp"
+#include "device/domain/state_enums.hpp"
 
 namespace device::common {
 Severity parseSeverity(std::string_view severity);

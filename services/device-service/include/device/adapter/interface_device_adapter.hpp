@@ -6,18 +6,20 @@
 
 #include "device/domain/alarm.hpp"
 #include "device/domain/device_id.hpp"
+#include "device/domain/device_status.hpp"
+#include "device/domain/event.hpp"
 #include "device/domain/measurement.hpp"
-#include "device/domain/status.hpp"
 
 class IDeviceAdapter {
   public:
     virtual ~IDeviceAdapter() = default;
 
-    virtual bool processMessage(std::string_view rawMessage) = 0;
-    virtual DeviceID getDeviceID() = 0;
-    virtual DeviceStatus getStatus() = 0;
-    virtual std::vector<Alarm> getAlarms() = 0;
-    virtual std::optional<Measurement> getMeasurement() = 0;
+    virtual std::vector<DeviceEvent> processMessage(std::string_view rawMessage) = 0;
+
+    [[nodiscard]] virtual DeviceID getDeviceID() const = 0;
+    [[nodiscard]] virtual DeviceStatus getStatus() const = 0;
+    [[nodiscard]] virtual std::vector<Alarm> getAlarms() const = 0;
+    [[nodiscard]] virtual std::optional<Measurement> getMeasurement() const = 0;
 };
 
 #endif  // INTERFACE_DEVICE_ADAPTER_HPP

@@ -4,8 +4,8 @@
 #include <variant>
 
 #include "alarm.hpp"
+#include "device_status.hpp"
 #include "measurement.hpp"
-#include "status.hpp"
 
 using DeviceEvent = std::variant<Measurement, Alarm, DeviceStatus>;
 

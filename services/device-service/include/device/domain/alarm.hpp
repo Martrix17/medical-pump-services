@@ -4,7 +4,7 @@
 #include <chrono>
 
 #include "device_id.hpp"
-#include "status.hpp"
+#include "state_enums.hpp"
 
 using Timestamp = std::chrono::system_clock::time_point;
 

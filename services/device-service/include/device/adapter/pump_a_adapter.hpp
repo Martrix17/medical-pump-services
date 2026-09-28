@@ -6,13 +6,16 @@
 
 class PumpAAdapter : public IDeviceAdapter {
   public:
-    bool processMessage(std::string_view rawMessage) override;
-    DeviceID getDeviceID() override;
-    DeviceStatus getStatus() override;
-    std::vector<Alarm> getAlarms() override;
-    std::optional<Measurement> getMeasurement() override;
+    std::vector<DeviceEvent> processMessage(std::string_view rawMessage) override;
+
+    [[nodiscard]] DeviceID getDeviceID() const override;
+    [[nodiscard]] DeviceStatus getStatus() const override;
+    [[nodiscard]] std::vector<Alarm> getAlarms() const override;
+    [[nodiscard]] std::optional<Measurement> getMeasurement() const override;
 
   private:
+    [[nodiscard]] Timestamp resolveTimestamp(const std::string& rawTimestamp) const;
+
     std::optional<PumpAMessage> latestMessage_;
 };
 
