@@ -1,15 +1,25 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <chrono>
+#include <nlohmann/json.hpp>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <variant>
+#include <vector>
 
 #include "device/adapter/pump_a_adapter.hpp"
+#include "device/common/device_status_parser.hpp"
 #include "device/domain/alarm.hpp"
+#include "device/domain/device_status.hpp"
 #include "device/domain/measurement.hpp"
-#include "device/domain/status.hpp"
 
 namespace {
 
-constexpr std::string_view testMessage = R"({
+using json = nlohmann::json;
+
+constexpr std::string_view kMessageWithAlarm = R"({
     "device_id": "pump-a-001",
     "timestamp": "2026-09-22T00:00:00Z",
     "status": "Connected",
@@ -21,155 +31,171 @@ constexpr std::string_view testMessage = R"({
     }
 })";
 
-class PumpAAdapterTest : public ::testing::Test {
-  protected:
-    void SetUp() override {
-        adapter.processMessage(testMessage);
-    }
-
-    PumpAAdapter adapter;
-};
-
-TEST_F(PumpAAdapterTest, GetsDeviceId) {
-    const auto deviceID = adapter.getDeviceID();
-
-    ASSERT_TRUE(!deviceID.value().empty());
-    EXPECT_EQ(deviceID.value(), "pump-a-001");
+json alarmMessage() {
+    return json::parse(kMessageWithAlarm);
 }
 
-TEST_F(PumpAAdapterTest, GetsMeasurement) {
-    const auto measurement = adapter.getMeasurement();
+json baseMessage() {
+    auto message = alarmMessage();
+    message.erase("alarm");
+    return message;
+}
+
+template <typename T> std::size_t countOf(const std::vector<DeviceEvent>& events) {
+    return static_cast<std::size_t>(
+        std::count_if(events.begin(), events.end(),
+                      [](const DeviceEvent& e) { return std::holds_alternative<T>(e); }));
+}
+
+std::optional<Measurement> firstMeasurement(const std::vector<DeviceEvent>& events) {
+    for (const auto& e : events) {
+        if (const auto* m = std::get_if<Measurement>(&e)) {
+            return *m;
+        }
+    }
+    return std::nullopt;
+}
+
+}  // namespace
+
+TEST(PumpAAdapterTest, FullDeviceMessageYieldsStatusMeasurementAndAlarm) {
+    PumpAAdapter adapter;
+    const auto events = adapter.processMessage(kMessageWithAlarm);
+
+    EXPECT_EQ(events.size(), 3U);
+    EXPECT_EQ(countOf<DeviceStatus>(events), 1U);
+    EXPECT_EQ(countOf<Measurement>(events), 1U);
+    EXPECT_EQ(countOf<Alarm>(events), 1U);
+}
+
+TEST(PumpAAdapterTest, MessageWithoutAlarmYieldsStatusAndMeasurementOnly) {
+    PumpAAdapter adapter;
+    const auto events = adapter.processMessage(baseMessage().dump());
+
+    EXPECT_EQ(events.size(), 2U);
+    EXPECT_EQ(countOf<Alarm>(events), 0U);
+}
+
+TEST(PumpAAdapterTest, NullAlarmYieldsNoAlarmEvent) {
+    auto message = baseMessage();
+    message["alarm"] = nullptr;
+
+    PumpAAdapter adapter;
+    EXPECT_EQ(countOf<Alarm>(adapter.processMessage(message.dump())), 0U);
+}
+
+TEST(PumpAAdapterTest, MeasurementCarriesFlowRateAndPressure) {
+    PumpAAdapter adapter;
+    const auto measurement = firstMeasurement(adapter.processMessage(kMessageWithAlarm));
 
     ASSERT_TRUE(measurement.has_value());
     EXPECT_DOUBLE_EQ(measurement->flowRate(), 1.5);
     EXPECT_DOUBLE_EQ(measurement->pressure(), 2.1);
 }
 
-TEST_F(PumpAAdapterTest, GetsStatus) {
-    const auto status = adapter.getStatus();
+TEST(PumpAAdapterTest, TimestampIsParsedExactly) {
+    PumpAAdapter adapter;
+    const auto measurement = firstMeasurement(adapter.processMessage(kMessageWithAlarm));
 
-    EXPECT_EQ(status, DeviceStatus::Connected);
+    ASSERT_TRUE(measurement.has_value());
+    const Timestamp expected{
+        std::chrono::sys_days{std::chrono::year{2026} / std::chrono::September / 22}};
+    EXPECT_EQ(measurement->timestamp(), expected);
 }
 
-TEST_F(PumpAAdapterTest, GetsAlarm) {
-    const auto alarms = adapter.getAlarms();
+TEST(PumpAAdapterTest, UnparsableTimestampFallsBackToProcessingTime) {
+    auto message = baseMessage();
+    message["timestamp"] = "not-a-timestamp";
 
-    ASSERT_FALSE(alarms.empty());
+    PumpAAdapter adapter;
+    const auto before = Timestamp::clock::now();
+    const auto measurement = firstMeasurement(adapter.processMessage(message.dump()));
+    const auto after = Timestamp::clock::now();
 
-    const auto& alarm = alarms.front();
-
-    EXPECT_EQ(alarm.type(), AlarmType::LowPressure);
-    EXPECT_EQ(alarm.severity(), Severity::Warning);
+    ASSERT_TRUE(measurement.has_value());
+    EXPECT_GE(measurement->timestamp(), before);
+    EXPECT_LE(measurement->timestamp(), after);
 }
 
-TEST_F(PumpAAdapterTest, RejectsEmptyMessage) {
-    PumpAAdapter emptyAdapter;
+TEST(PumpAAdapterTest, StatusMatchesStatusParser) {
+    PumpAAdapter adapter;
+    const auto events = adapter.processMessage(kMessageWithAlarm);
 
-    EXPECT_FALSE(emptyAdapter.processMessage(""));
+    ASSERT_EQ(countOf<DeviceStatus>(events), 1U);
+    const auto status = std::get<DeviceStatus>(
+        *std::find_if(events.begin(), events.end(), [](const DeviceEvent& e) {
+            return std::holds_alternative<DeviceStatus>(e);
+        }));
+    EXPECT_EQ(status.state(), device::common::parseState("Connected"));
+    EXPECT_NE(status.state(), State::Unknown);
 }
 
-TEST_F(PumpAAdapterTest, RejectsMalformedJson) {
-    PumpAAdapter malformedAdapter;
+TEST(PumpAAdapterTest, UnknownStatusStringYieldsUnknownStatusAndKeepsMeasurement) {
+    auto message = baseMessage();
+    message["status"] = "definitely-not-a-status";
 
-    EXPECT_FALSE(malformedAdapter.processMessage("{not valid json"));
+    PumpAAdapter adapter;
+    const auto events = adapter.processMessage(message.dump());
+
+    EXPECT_EQ(countOf<Measurement>(events), 1U);
+    ASSERT_EQ(countOf<DeviceStatus>(events), 1U);
+    EXPECT_EQ(std::get<DeviceStatus>(events.front()).state(), State::Unknown);
 }
 
-TEST_F(PumpAAdapterTest, RejectsMessageMissingRequiredField) {
-    constexpr std::string_view missingFlowRate = R"({
-        "device_id": "pump-a-002",
-        "timestamp": "2026-09-22T00:00:00Z",
-        "status": "Connected",
-        "pressure": 2.1
-    })";
+class PumpAAdapterMalformedTest : public ::testing::TestWithParam<std::string> {};
 
-    PumpAAdapter incompleteAdapter;
-
-    EXPECT_FALSE(incompleteAdapter.processMessage(missingFlowRate));
+TEST_P(PumpAAdapterMalformedTest, YieldsNoEvents) {
+    PumpAAdapter adapter;
+    EXPECT_TRUE(adapter.processMessage(GetParam()).empty());
 }
 
-TEST_F(PumpAAdapterTest, NoAlarmWhenFieldAbsent) {
-    constexpr std::string_view noAlarmMessage = R"({
-        "device_id": "pump-a-003",
-        "timestamp": "2026-09-22T00:00:00Z",
-        "status": "Connected",
-        "flow_rate": 1.0,
-        "pressure": 1.0
-    })";
+INSTANTIATE_TEST_SUITE_P(BadInput, PumpAAdapterMalformedTest,
+                         ::testing::Values(
+                             std::string{""}, std::string{"not json"}, std::string{"{}"},
+                             std::string{"[]"},
+                             [] {
+                                 auto m = baseMessage();
+                                 m.erase("flow_rate");
+                                 return m.dump();
+                             }(),
+                             [] {
+                                 auto m = baseMessage();
+                                 m["flow_rate"] = "fast";
+                                 return m.dump();
+                             }(),
+                             [] {
+                                 auto m = baseMessage();
+                                 m.erase("device_id");
+                                 return m.dump();
+                             }(),
+                             [] {
+                                 auto m = alarmMessage();
+                                 m["alarm"].erase("severity");
+                                 return m.dump();
+                             }()));
 
-    PumpAAdapter noAlarmAdapter;
-    ASSERT_TRUE(noAlarmAdapter.processMessage(noAlarmMessage));
+TEST(PumpAAdapterTest, FailedParseDoesNotReuseStateFromPreviousMessage) {
+    PumpAAdapter adapter;
+    ASSERT_FALSE(adapter.processMessage(kMessageWithAlarm).empty());
 
-    EXPECT_TRUE(noAlarmAdapter.getAlarms().empty());
-    ASSERT_TRUE(noAlarmAdapter.getMeasurement().has_value());
-    EXPECT_EQ(noAlarmAdapter.getStatus(), DeviceStatus::Connected);
+    EXPECT_TRUE(adapter.processMessage("garbage").empty());
 }
 
-TEST_F(PumpAAdapterTest, NoAlarmWhenFieldIsNull) {
-    constexpr std::string_view nullAlarmMessage = R"({
-        "device_id": "pump-a-004",
-        "timestamp": "2026-09-22T00:00:00Z",
-        "status": "Connected",
-        "flow_rate": 1.0,
-        "pressure": 1.0,
-        "alarm": null
-    })";
+TEST(PumpAAdapterTest, AdapterIsReusableAcrossMessages) {
+    auto second = baseMessage();
+    second["flow_rate"] = 99.0;
 
-    PumpAAdapter nullAlarmAdapter;
-    ASSERT_TRUE(nullAlarmAdapter.processMessage(nullAlarmMessage));
+    PumpAAdapter adapter;
+    adapter.processMessage(kMessageWithAlarm);
+    const auto measurement = firstMeasurement(adapter.processMessage(second.dump()));
 
-    EXPECT_TRUE(nullAlarmAdapter.getAlarms().empty());
+    ASSERT_TRUE(measurement.has_value());
+    EXPECT_DOUBLE_EQ(measurement->flowRate(), 99.0);
 }
 
-TEST_F(PumpAAdapterTest, UnknownStatusMapsToUnknownEnum) {
-    constexpr std::string_view unknownStatusMessage = R"({
-        "device_id": "pump-a-005",
-        "timestamp": "2026-09-22T00:00:00Z",
-        "status": "UnrecognizedStatus",
-        "flow_rate": 1.0,
-        "pressure": 1.0
-    })";
+TEST(PumpAAdapterTest, AlarmDoesNotLeakIntoFollowingAlarmFreeMessage) {
+    PumpAAdapter adapter;
+    ASSERT_EQ(countOf<Alarm>(adapter.processMessage(kMessageWithAlarm)), 1U);
 
-    PumpAAdapter unknownStatusAdapter;
-    ASSERT_TRUE(unknownStatusAdapter.processMessage(unknownStatusMessage));
-
-    EXPECT_EQ(unknownStatusAdapter.getStatus(), DeviceStatus::Unknown);
+    EXPECT_EQ(countOf<Alarm>(adapter.processMessage(baseMessage().dump())), 0U);
 }
-
-TEST_F(PumpAAdapterTest, InvalidTimestampFallsBackToNow) {
-    constexpr std::string_view badTimestampMessage = R"({
-        "device_id": "pump-a-006",
-        "timestamp": "not-a-real-timestamp",
-        "status": "Connected",
-        "flow_rate": 1.0,
-        "pressure": 1.0,
-        "alarm": {
-            "type": "Low_Pressure",
-            "severity": "Warning"
-        }
-    })";
-
-    PumpAAdapter badTimestampAdapter;
-    ASSERT_TRUE(badTimestampAdapter.processMessage(badTimestampMessage));
-
-    const auto alarms = badTimestampAdapter.getAlarms();
-    ASSERT_FALSE(alarms.empty());
-    EXPECT_LE(alarms.front().timestamp(), Timestamp::clock::now());
-}
-
-TEST_F(PumpAAdapterTest, ReprocessingOverwritesPreviousState) {
-    constexpr std::string_view secondMessage = R"({
-        "device_id": "pump-a-999",
-        "timestamp": "2026-09-22T01:00:00Z",
-        "status": "Disconnected",
-        "flow_rate": 9.9,
-        "pressure": 9.9
-    })";
-
-    ASSERT_TRUE(adapter.processMessage(secondMessage));
-
-    EXPECT_EQ(adapter.getDeviceID().value(), "pump-a-999");
-    EXPECT_EQ(adapter.getStatus(), DeviceStatus::Disconnected);
-    EXPECT_TRUE(adapter.getAlarms().empty());
-}
-
-}  // namespace

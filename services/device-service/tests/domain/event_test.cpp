@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include "device/domain/device_status.hpp"
 #include "device/domain/event.hpp"
+#include "device/domain/state_enums.hpp"
 
 TEST(DeviceEventTest, MeasurementToDeviceEvent) {
     DeviceID deviceID{"device-1"};
@@ -31,9 +33,13 @@ TEST(DeviceEventTest, AlarmToDeviceEvent) {
 }
 
 TEST(DeviceEventTest, DeviceStatusToDeviceEvent) {
-    DeviceStatus state = DeviceStatus::Connected;
+    DeviceID deviceID{"device-1"};
+    State state = State::Connected;
+    Timestamp timestamp = Timestamp::clock::now();
 
-    DeviceEvent event = state;
+    DeviceStatus status{deviceID, state, timestamp};
+
+    DeviceEvent event = status;
 
     EXPECT_TRUE(std::holds_alternative<DeviceStatus>(event));
 }
