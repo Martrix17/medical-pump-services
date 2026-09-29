@@ -34,7 +34,7 @@ TEST(DeviceEventTest, AlarmToDeviceEvent) {
 
 TEST(DeviceEventTest, DeviceStatusToDeviceEvent) {
     DeviceID deviceID{"device-1"};
-    State state = State::Connected;
+    DeviceState state = DeviceState::Connected;
     Timestamp timestamp = Timestamp::clock::now();
 
     DeviceStatus status{deviceID, state, timestamp};

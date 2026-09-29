@@ -10,15 +10,15 @@ using Timestamp = std::chrono::system_clock::time_point;
 
 class DeviceStatus {
   public:
-    explicit DeviceStatus(DeviceID deviceID, State state, Timestamp timestamp);
+    explicit DeviceStatus(DeviceID deviceID, DeviceState deviceState, Timestamp timestamp);
 
     [[nodiscard]] const DeviceID& deviceID() const noexcept;
-    [[nodiscard]] State state() const noexcept;
+    [[nodiscard]] DeviceState deviceState() const noexcept;
     [[nodiscard]] Timestamp timestamp() const noexcept;
 
   private:
     DeviceID deviceID_;
-    State state_;
+    DeviceState deviceState_;
     Timestamp timestamp_;
 };
 

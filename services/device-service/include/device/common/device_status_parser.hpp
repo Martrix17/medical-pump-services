@@ -6,7 +6,7 @@
 #include "device/domain/state_enums.hpp"
 
 namespace device::common {
-State parseState(std::string_view status);
+DeviceState parseDeviceState(std::string_view status);
 }
 
 #endif  // DEVICE_STATUS_PARSER_HPP

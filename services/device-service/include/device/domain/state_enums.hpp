@@ -3,9 +3,9 @@
 
 #include <string_view>
 
-enum class State { Disconnected, Connecting, Connected, Error, Unknown };
+enum class DeviceState { Disconnected, Connecting, Connected, Error, Unknown };
 
-[[nodiscard]] std::string_view toString(State status);
+[[nodiscard]] std::string_view toString(DeviceState status);
 
 enum class Severity { Info, Warning, Critical, Unknown };
 

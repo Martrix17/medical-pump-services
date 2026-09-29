@@ -126,8 +126,8 @@ TEST(PumpAAdapterTest, StatusMatchesStatusParser) {
         *std::find_if(events.begin(), events.end(), [](const DeviceEvent& e) {
             return std::holds_alternative<DeviceStatus>(e);
         }));
-    EXPECT_EQ(status.state(), device::common::parseState("Connected"));
-    EXPECT_NE(status.state(), State::Unknown);
+    EXPECT_EQ(status.deviceState(), device::common::parseDeviceState("Connected"));
+    EXPECT_NE(status.deviceState(), DeviceState::Unknown);
 }
 
 TEST(PumpAAdapterTest, UnknownStatusStringYieldsUnknownStatusAndKeepsMeasurement) {
@@ -139,7 +139,7 @@ TEST(PumpAAdapterTest, UnknownStatusStringYieldsUnknownStatusAndKeepsMeasurement
 
     EXPECT_EQ(countOf<Measurement>(events), 1U);
     ASSERT_EQ(countOf<DeviceStatus>(events), 1U);
-    EXPECT_EQ(std::get<DeviceStatus>(events.front()).state(), State::Unknown);
+    EXPECT_EQ(std::get<DeviceStatus>(events.front()).deviceState(), DeviceState::Unknown);
 }
 
 class PumpAAdapterMalformedTest : public ::testing::TestWithParam<std::string> {};

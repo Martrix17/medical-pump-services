@@ -42,11 +42,11 @@ DeviceID PumpAAdapter::getDeviceID() const {
 
 DeviceStatus PumpAAdapter::getStatus() const {
     if (!latestMessage_) {
-        return DeviceStatus{getDeviceID(), State::Unknown, Timestamp::clock::now()};
+        return DeviceStatus{getDeviceID(), DeviceState::Unknown, Timestamp::clock::now()};
     }
 
     const auto& message = *latestMessage_;
-    const auto state = device::common::parseState(latestMessage_->status);
+    const auto state = device::common::parseDeviceState(latestMessage_->status);
     const auto timestamp = resolveTimestamp(message.timestamp);
 
     return DeviceStatus{DeviceID{message.deviceID}, state, timestamp};

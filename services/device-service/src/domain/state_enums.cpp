@@ -1,16 +1,16 @@
 #include "device/domain/state_enums.hpp"
 
-std::string_view toString(State status) {
+std::string_view toString(DeviceState status) {
     switch (status) {
-        case State::Disconnected:
+        case DeviceState::Disconnected:
             return "Disconnected";
-        case State::Connecting:
+        case DeviceState::Connecting:
             return "Connecting";
-        case State::Connected:
+        case DeviceState::Connected:
             return "Connected";
-        case State::Error:
+        case DeviceState::Error:
             return "Error";
-        case State::Unknown:
+        case DeviceState::Unknown:
             return "Unknown";
     }
 

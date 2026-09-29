@@ -6,12 +6,12 @@
 
 TEST(DeviceStatusConstructorTest, ValidDeviceStatus) {
     DeviceID deviceID{"device-1"};
-    State state = State::Connected;
+    DeviceState state = DeviceState::Connected;
     Timestamp timestamp = Timestamp::clock::now();
 
     DeviceStatus deviceStatus(deviceID, state, timestamp);
 
     EXPECT_EQ(deviceStatus.deviceID(), deviceID);
-    EXPECT_EQ(deviceStatus.state(), state);
+    EXPECT_EQ(deviceStatus.deviceState(), state);
     EXPECT_EQ(deviceStatus.timestamp(), timestamp);
 }
