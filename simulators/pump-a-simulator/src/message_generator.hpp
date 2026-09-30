@@ -12,6 +12,11 @@ class MessageGenerator {
     [[nodiscard]] std::string generate();
 
   private:
+    struct SimulatedMeasurement {
+        double flowRate;
+        double pressure;
+    };
+
     struct SimulatedAlarm {
         std::string type;
         std::string severity;
@@ -22,8 +27,7 @@ class MessageGenerator {
 
     [[nodiscard]] static std::string randomTimestamp();
     [[nodiscard]] std::string randomStatus();
-    [[nodiscard]] double randomFlowRate();
-    [[nodiscard]] double randomPressure();
+    [[nodiscard]] std::optional<SimulatedMeasurement> randomMeasurement();
     [[nodiscard]] std::optional<SimulatedAlarm> randomAlarm();
 };
 

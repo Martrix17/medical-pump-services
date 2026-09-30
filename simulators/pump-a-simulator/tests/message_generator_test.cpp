@@ -28,8 +28,6 @@ TEST(MessageGeneratorTest, ContainsRequiredFields) {
     EXPECT_TRUE(json.contains("device_id"));
     EXPECT_TRUE(json.contains("timestamp"));
     EXPECT_TRUE(json.contains("status"));
-    EXPECT_TRUE(json.contains("flow_rate"));
-    EXPECT_TRUE(json.contains("pressure"));
 }
 
 TEST(MessageGeneratorTest, UsesConfiguredDeviceId) {
@@ -40,24 +38,6 @@ TEST(MessageGeneratorTest, UsesConfiguredDeviceId) {
 
     ASSERT_TRUE(json.contains("device_id"));
     EXPECT_EQ(json.at("device_id"), "pump-a-007");
-}
-
-TEST(MessageGeneratorTest, GeneratesValidMeasurementValues) {
-    MessageGenerator generator{"pump-a-001"};
-
-    for (int i = 0; i < 100; ++i) {
-        const auto message = generator.generate();
-        const auto json = nlohmann::json::parse(message);
-
-        ASSERT_TRUE(json.at("flow_rate").is_number());
-        ASSERT_TRUE(json.at("pressure").is_number());
-
-        EXPECT_GE(json.at("flow_rate").get<double>(), 0.0);
-        EXPECT_LE(json.at("flow_rate").get<double>(), 5.0);
-
-        EXPECT_GE(json.at("pressure").get<double>(), 0.0);
-        EXPECT_LE(json.at("pressure").get<double>(), 4.0);
-    }
 }
 
 TEST(MessageGeneratorTest, GeneratesValidStatus) {
@@ -73,6 +53,39 @@ TEST(MessageGeneratorTest, GeneratesValidStatus) {
         const auto status = json.at("status").get<std::string>();
 
         EXPECT_TRUE(std::ranges::find(validStatuses, status) != validStatuses.end());
+    }
+}
+
+TEST(MessageGeneratorTest, GeneratesValidMeasurementValues) {
+    MessageGenerator generator{"pump-a-001"};
+
+    bool sawMeasurement = false;
+    bool sawNoMeasurement = false;
+
+    for (int i = 0; i < 100; ++i) {
+        const auto message = generator.generate();
+        const auto json = nlohmann::json::parse(message);
+
+        if (json.contains("measurement")) {
+            sawMeasurement = true;
+
+            ASSERT_TRUE(json.at("flow_rate").is_number());
+            ASSERT_TRUE(json.at("pressure").is_number());
+
+            EXPECT_GE(json.at("flow_rate").get<double>(), 0.0);
+            EXPECT_LE(json.at("flow_rate").get<double>(), 5.0);
+            EXPECT_GE(json.at("pressure").get<double>(), 0.0);
+            EXPECT_LE(json.at("pressure").get<double>(), 4.0);
+        } else {
+            sawNoMeasurement = true;
+        }
+
+        if (sawMeasurement && sawNoMeasurement) {
+            break;
+        }
+
+        EXPECT_TRUE(sawMeasurement);
+        EXPECT_TRUE(sawNoMeasurement);
     }
 }
 

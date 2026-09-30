@@ -25,14 +25,16 @@ std::string MessageGenerator::randomStatus() {
     return statuses[dist(rng_)];
 }
 
-double MessageGenerator::randomFlowRate() {
-    std::uniform_real_distribution<double> dist(0.0, 5.0);
-    return dist(rng_);
-}
+std::optional<MessageGenerator::SimulatedMeasurement> MessageGenerator::randomMeasurement() {
+    std::bernoulli_distribution hasMeasurement(0.75);
+    if (!hasMeasurement(rng_)) {
+        return std::nullopt;
+    }
 
-double MessageGenerator::randomPressure() {
-    std::uniform_real_distribution<double> dist(0.0, 4.0);
-    return dist(rng_);
+    std::uniform_real_distribution<double> flow_rates(0.0, 5.0);
+    std::uniform_real_distribution<double> pressures(0.0, 4.0);
+
+    return SimulatedMeasurement{flow_rates(rng_), pressures(rng_)};
 }
 
 std::optional<MessageGenerator::SimulatedAlarm> MessageGenerator::randomAlarm() {
@@ -52,11 +54,13 @@ std::optional<MessageGenerator::SimulatedAlarm> MessageGenerator::randomAlarm() 
 }
 
 std::string MessageGenerator::generate() {
-    nlohmann::json message = {{"device_id", deviceID_},
-                              {"timestamp", randomTimestamp()},
-                              {"status", randomStatus()},
-                              {"flow_rate", randomFlowRate()},
-                              {"pressure", randomPressure()}};
+    nlohmann::json message = {
+        {"device_id", deviceID_}, {"timestamp", randomTimestamp()}, {"status", randomStatus()}};
+
+    if (const auto measurement = randomMeasurement(); measurement.has_value()) {
+        message["measurement"] = {{"flow_rate", measurement->flowRate},
+                                  {"pressure", measurement->pressure}};
+    }
 
     if (const auto alarm = randomAlarm(); alarm.has_value()) {
         message["alarm"] = {{"type", alarm->type}, {"severity", alarm->severity}};
