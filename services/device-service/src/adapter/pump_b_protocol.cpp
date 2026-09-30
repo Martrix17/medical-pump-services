@@ -1,5 +1,7 @@
 #include "device/adapter/pump_b_protocol.hpp"
 
+#include "device/adapter/pump_b_message.hpp"
+
 std::optional<PumpBMessageType> device::pumpB::parseMessageType(std::uint8_t value) {
     switch (value) {
         case 0x01:
@@ -32,6 +34,8 @@ std::optional<PumpBStatus> device::pumpB::parseStatus(std::uint8_t value) {
 
 std::optional<PumpBAlarmType> device::pumpB::parseAlarmType(std::uint8_t value) {
     switch (value) {
+        case 0x00:
+            return PumpBAlarmType::None;
         case 0x01:
             return PumpBAlarmType::Occlusion;
         case 0x02:
@@ -45,6 +49,8 @@ std::optional<PumpBAlarmType> device::pumpB::parseAlarmType(std::uint8_t value) 
 
 std::optional<PumpBSeverity> device::pumpB::parseSeverity(std::uint8_t value) {
     switch (value) {
+        case 0x00:
+            return PumpBSeverity::None;
         case 0x01:
             return PumpBSeverity::Info;
         case 0x02:

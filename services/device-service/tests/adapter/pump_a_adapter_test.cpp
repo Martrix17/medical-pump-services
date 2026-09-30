@@ -121,7 +121,7 @@ TEST(PumpAAdapterTest, NullMeasurementYieldsNoMeasurementEvent) {
     message["measurement"] = nullptr;
 
     PumpAAdapter adapter;
-    EXPECT_EQ(countOf<Alarm>(adapter.processMessage(message.dump())), 0U);
+    EXPECT_EQ(countOf<Measurement>(adapter.processMessage(message.dump())), 0U);
 }
 
 TEST(PumpAAdapterTest, MeasurementCarriesFlowRateAndPressure) {
@@ -144,7 +144,7 @@ TEST(PumpAAdapterTest, TimestampIsParsedExactly) {
 }
 
 TEST(PumpAAdapterTest, UnparsableTimestampFallsBackToProcessingTime) {
-    auto message = baseMessage();
+    auto message = fullMessage();
     message["timestamp"] = "not-a-timestamp";
 
     PumpAAdapter adapter;

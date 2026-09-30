@@ -69,13 +69,13 @@ TEST(MessageGeneratorTest, GeneratesValidMeasurementValues) {
         if (json.contains("measurement")) {
             sawMeasurement = true;
 
-            ASSERT_TRUE(json.at("flow_rate").is_number());
-            ASSERT_TRUE(json.at("pressure").is_number());
+            ASSERT_TRUE(json.at("measurement").at("flow_rate").is_number());
+            ASSERT_TRUE(json.at("measurement").at("pressure").is_number());
 
-            EXPECT_GE(json.at("flow_rate").get<double>(), 0.0);
-            EXPECT_LE(json.at("flow_rate").get<double>(), 5.0);
-            EXPECT_GE(json.at("pressure").get<double>(), 0.0);
-            EXPECT_LE(json.at("pressure").get<double>(), 4.0);
+            EXPECT_GE(json.at("measurement").at("flow_rate").get<double>(), 0.0);
+            EXPECT_LE(json.at("measurement").at("flow_rate").get<double>(), 5.0);
+            EXPECT_GE(json.at("measurement").at("pressure").get<double>(), 0.0);
+            EXPECT_LE(json.at("measurement").at("pressure").get<double>(), 4.0);
         } else {
             sawNoMeasurement = true;
         }
@@ -83,10 +83,10 @@ TEST(MessageGeneratorTest, GeneratesValidMeasurementValues) {
         if (sawMeasurement && sawNoMeasurement) {
             break;
         }
-
-        EXPECT_TRUE(sawMeasurement);
-        EXPECT_TRUE(sawNoMeasurement);
     }
+
+    EXPECT_TRUE(sawMeasurement);
+    EXPECT_TRUE(sawNoMeasurement);
 }
 
 TEST(MessageGeneratorTest, AlarmIsOptional) {

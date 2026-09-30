@@ -1,43 +1,52 @@
 #include "device/common/binary_reader.hpp"
 
 #include <bit>
+#include <stdexcept>
+
+namespace {
+void requireBytes(std::string_view data, std::size_t offset, std::size_t count) {
+    if (offset > data.size() || data.size() - offset < count) {
+        throw std::out_of_range("binary reader: not enough data");
+    }
+}
+
+template <typename T> T readBigEndian(std::string_view data, std::size_t offset) {
+    requireBytes(data, offset, sizeof(T));
+
+    T value = 0;
+    for (std::size_t i = 0; i < sizeof(T); ++i) {
+        value = static_cast<T>((value << 8) | static_cast<unsigned char>(data[offset + i]));
+    }
+    return value;
+}
+
+}  // namespace
 
 std::uint8_t binary::readUint8(std::string_view data, std::size_t offset) {
-    return static_cast<std::uint8_t>(static_cast<unsigned char>(data[offset]));
+    return readBigEndian<std::uint8_t>(data, offset);
 }
 
 std::uint16_t binary::readUint16(std::string_view data, std::size_t offset) {
-    return (static_cast<std::uint16_t>(static_cast<unsigned char>(data[offset])) << 8) |
-           static_cast<std::uint16_t>(static_cast<unsigned char>(data[offset + 1]));
+    return readBigEndian<std::uint16_t>(data, offset);
 }
 
 std::uint32_t binary::readUint32(std::string_view data, std::size_t offset) {
-    return (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset])) << 24) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 1])) << 16) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 2])) << 8) |
-           static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 3]));
+    return readBigEndian<std::uint32_t>(data, offset);
 }
 
 std::uint64_t binary::readUint64(std::string_view data, std::size_t offset) {
-    return (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset])) << 56) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 1])) << 48) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 2])) << 40) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 3])) << 32) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 4])) << 24) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 5])) << 16) |
-           (static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 6])) << 8) |
-           static_cast<std::uint32_t>(static_cast<unsigned char>(data[offset + 7]));
+    return readBigEndian<std::uint64_t>(data, offset);
 }
 
 float binary::readFloat32(std::string_view data, std::size_t offset) {
-    const std::uint32_t bits = readUint32(data, offset);
-    return std::bit_cast<float>(bits);
+    static_assert(sizeof(float) == sizeof(std::uint32_t), "float must be 32 bits");
+    return std::bit_cast<float>(readUint32(data, offset));
 }
 
 std::uint16_t binary::calculateChecksum(std::string_view data) {
     std::uint16_t checksum = 0;
     for (const unsigned char byte : data) {
-        checksum += byte;
+        checksum = static_cast<std::uint16_t>(checksum + byte);
     }
     return checksum;
 }
