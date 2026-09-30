@@ -1,7 +1,7 @@
 #include "device/domain/state_enums.hpp"
 
-std::string_view toString(DeviceState status) {
-    switch (status) {
+std::string_view toString(DeviceState state) {
+    switch (state) {
         case DeviceState::Disconnected:
             return "Disconnected";
         case DeviceState::Connecting:

@@ -5,7 +5,7 @@
 
 enum class DeviceState { Disconnected, Connecting, Connected, Error, Unknown };
 
-[[nodiscard]] std::string_view toString(DeviceState status);
+[[nodiscard]] std::string_view toString(DeviceState state);
 
 enum class Severity { Info, Warning, Critical, Unknown };
 

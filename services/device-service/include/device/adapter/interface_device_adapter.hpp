@@ -17,7 +17,7 @@ class IDeviceAdapter {
     virtual std::vector<DeviceEvent> processMessage(std::string_view rawMessage) = 0;
 
     [[nodiscard]] virtual DeviceID getDeviceID() const = 0;
-    [[nodiscard]] virtual DeviceStatus getStatus() const = 0;
+    [[nodiscard]] virtual std::optional<DeviceStatus> getStatus() const = 0;
     [[nodiscard]] virtual std::vector<Alarm> getAlarms() const = 0;
     [[nodiscard]] virtual std::optional<Measurement> getMeasurement() const = 0;
 };

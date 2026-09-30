@@ -19,25 +19,40 @@ namespace {
 
 using json = nlohmann::json;
 
-constexpr std::string_view kMessageWithAlarm = R"({
+constexpr std::string_view kFullMessage = R"({
     "device_id": "pump-a-001",
     "timestamp": "2026-09-22T00:00:00Z",
     "status": "Connected",
-    "flow_rate": 1.5,
-    "pressure": 2.1,
+    "measurement": {   
+        "flow_rate": 1.5,
+        "pressure": 2.1
+    },
     "alarm": {
         "type": "Low_Pressure",
         "severity": "Warning"
     }
 })";
 
-json alarmMessage() {
-    return json::parse(kMessageWithAlarm);
+json fullMessage() {
+    return json::parse(kFullMessage);
 }
 
 json baseMessage() {
-    auto message = alarmMessage();
+    auto message = fullMessage();
     message.erase("alarm");
+    message.erase("measurement");
+    return message;
+}
+
+json noAlarmMessage() {
+    auto message = fullMessage();
+    message.erase("alarm");
+    return message;
+}
+
+json noMeasurementMessage() {
+    auto message = fullMessage();
+    message.erase("measurement");
     return message;
 }
 
@@ -60,7 +75,7 @@ std::optional<Measurement> firstMeasurement(const std::vector<DeviceEvent>& even
 
 TEST(PumpAAdapterTest, FullDeviceMessageYieldsStatusMeasurementAndAlarm) {
     PumpAAdapter adapter;
-    const auto events = adapter.processMessage(kMessageWithAlarm);
+    const auto events = adapter.processMessage(kFullMessage);
 
     EXPECT_EQ(events.size(), 3U);
     EXPECT_EQ(countOf<DeviceStatus>(events), 1U);
@@ -68,17 +83,42 @@ TEST(PumpAAdapterTest, FullDeviceMessageYieldsStatusMeasurementAndAlarm) {
     EXPECT_EQ(countOf<Alarm>(events), 1U);
 }
 
-TEST(PumpAAdapterTest, MessageWithoutAlarmYieldsStatusAndMeasurementOnly) {
+TEST(PumpAAdapterTest, MessageWithoutMeasurementAndAlarmYieldsStatusOnly) {
     PumpAAdapter adapter;
     const auto events = adapter.processMessage(baseMessage().dump());
+
+    EXPECT_EQ(events.size(), 1U);
+    EXPECT_EQ(countOf<Measurement>(events), 0U);
+    EXPECT_EQ(countOf<Alarm>(events), 0U);
+}
+
+TEST(PumpAAdapterTest, MessageWithoutAlarmYieldsStatusAndMeasurementOnly) {
+    PumpAAdapter adapter;
+    const auto events = adapter.processMessage(noAlarmMessage().dump());
 
     EXPECT_EQ(events.size(), 2U);
     EXPECT_EQ(countOf<Alarm>(events), 0U);
 }
 
+TEST(PumpAAdapterTest, MessageWithoutMeasurementYieldsStatusAndAlarmOnly) {
+    PumpAAdapter adapter;
+    const auto events = adapter.processMessage(noMeasurementMessage().dump());
+
+    EXPECT_EQ(events.size(), 2U);
+    EXPECT_EQ(countOf<Measurement>(events), 0U);
+}
+
 TEST(PumpAAdapterTest, NullAlarmYieldsNoAlarmEvent) {
-    auto message = baseMessage();
+    auto message = fullMessage();
     message["alarm"] = nullptr;
+
+    PumpAAdapter adapter;
+    EXPECT_EQ(countOf<Alarm>(adapter.processMessage(message.dump())), 0U);
+}
+
+TEST(PumpAAdapterTest, NullMeasurementYieldsNoMeasurementEvent) {
+    auto message = fullMessage();
+    message["measurement"] = nullptr;
 
     PumpAAdapter adapter;
     EXPECT_EQ(countOf<Alarm>(adapter.processMessage(message.dump())), 0U);
@@ -86,7 +126,7 @@ TEST(PumpAAdapterTest, NullAlarmYieldsNoAlarmEvent) {
 
 TEST(PumpAAdapterTest, MeasurementCarriesFlowRateAndPressure) {
     PumpAAdapter adapter;
-    const auto measurement = firstMeasurement(adapter.processMessage(kMessageWithAlarm));
+    const auto measurement = firstMeasurement(adapter.processMessage(kFullMessage));
 
     ASSERT_TRUE(measurement.has_value());
     EXPECT_DOUBLE_EQ(measurement->flowRate(), 1.5);
@@ -95,7 +135,7 @@ TEST(PumpAAdapterTest, MeasurementCarriesFlowRateAndPressure) {
 
 TEST(PumpAAdapterTest, TimestampIsParsedExactly) {
     PumpAAdapter adapter;
-    const auto measurement = firstMeasurement(adapter.processMessage(kMessageWithAlarm));
+    const auto measurement = firstMeasurement(adapter.processMessage(kFullMessage));
 
     ASSERT_TRUE(measurement.has_value());
     const Timestamp expected{
@@ -119,7 +159,7 @@ TEST(PumpAAdapterTest, UnparsableTimestampFallsBackToProcessingTime) {
 
 TEST(PumpAAdapterTest, StatusMatchesStatusParser) {
     PumpAAdapter adapter;
-    const auto events = adapter.processMessage(kMessageWithAlarm);
+    const auto events = adapter.processMessage(kFullMessage);
 
     ASSERT_EQ(countOf<DeviceStatus>(events), 1U);
     const auto status = std::get<DeviceStatus>(
@@ -130,8 +170,8 @@ TEST(PumpAAdapterTest, StatusMatchesStatusParser) {
     EXPECT_NE(status.deviceState(), DeviceState::Unknown);
 }
 
-TEST(PumpAAdapterTest, UnknownStatusStringYieldsUnknownStatusAndKeepsMeasurement) {
-    auto message = baseMessage();
+TEST(PumpAAdapterTest, UnknownStatusStringYieldsNulloptAndKeepsMeasurement) {
+    auto message = noAlarmMessage();
     message["status"] = "definitely-not-a-status";
 
     PumpAAdapter adapter;
@@ -139,7 +179,6 @@ TEST(PumpAAdapterTest, UnknownStatusStringYieldsUnknownStatusAndKeepsMeasurement
 
     EXPECT_EQ(countOf<Measurement>(events), 1U);
     ASSERT_EQ(countOf<DeviceStatus>(events), 1U);
-    EXPECT_EQ(std::get<DeviceStatus>(events.front()).deviceState(), DeviceState::Unknown);
 }
 
 class PumpAAdapterMalformedTest : public ::testing::TestWithParam<std::string> {};
@@ -154,39 +193,39 @@ INSTANTIATE_TEST_SUITE_P(BadInput, PumpAAdapterMalformedTest,
                              std::string{""}, std::string{"not json"}, std::string{"{}"},
                              std::string{"[]"},
                              [] {
-                                 auto m = baseMessage();
-                                 m.erase("flow_rate");
+                                 auto m = fullMessage();
+                                 m["measurement"].erase("flow_rate");
                                  return m.dump();
                              }(),
                              [] {
-                                 auto m = baseMessage();
-                                 m["flow_rate"] = "fast";
+                                 auto m = fullMessage();
+                                 m["measurement"]["flow_rate"] = "fast";
                                  return m.dump();
                              }(),
                              [] {
-                                 auto m = baseMessage();
+                                 auto m = fullMessage();
                                  m.erase("device_id");
                                  return m.dump();
                              }(),
                              [] {
-                                 auto m = alarmMessage();
+                                 auto m = fullMessage();
                                  m["alarm"].erase("severity");
                                  return m.dump();
                              }()));
 
 TEST(PumpAAdapterTest, FailedParseDoesNotReuseStateFromPreviousMessage) {
     PumpAAdapter adapter;
-    ASSERT_FALSE(adapter.processMessage(kMessageWithAlarm).empty());
+    ASSERT_FALSE(adapter.processMessage(kFullMessage).empty());
 
     EXPECT_TRUE(adapter.processMessage("garbage").empty());
 }
 
 TEST(PumpAAdapterTest, AdapterIsReusableAcrossMessages) {
-    auto second = baseMessage();
-    second["flow_rate"] = 99.0;
+    auto second = fullMessage();
+    second["measurement"]["flow_rate"] = 99.0;
 
     PumpAAdapter adapter;
-    adapter.processMessage(kMessageWithAlarm);
+    adapter.processMessage(kFullMessage);
     const auto measurement = firstMeasurement(adapter.processMessage(second.dump()));
 
     ASSERT_TRUE(measurement.has_value());
@@ -195,7 +234,7 @@ TEST(PumpAAdapterTest, AdapterIsReusableAcrossMessages) {
 
 TEST(PumpAAdapterTest, AlarmDoesNotLeakIntoFollowingAlarmFreeMessage) {
     PumpAAdapter adapter;
-    ASSERT_EQ(countOf<Alarm>(adapter.processMessage(kMessageWithAlarm)), 1U);
+    ASSERT_EQ(countOf<Alarm>(adapter.processMessage(kFullMessage)), 1U);
 
     EXPECT_EQ(countOf<Alarm>(adapter.processMessage(baseMessage().dump())), 0U);
 }

@@ -1,12 +1,13 @@
 #ifndef DEVICE_STATUS_PARSER_HPP
 #define DEVICE_STATUS_PARSER_HPP
 
+#include <cstdint>
 #include <string_view>
 
 #include "device/domain/state_enums.hpp"
 
 namespace device::common {
 DeviceState parseDeviceState(std::string_view status);
-}
+}  // namespace device::common
 
 #endif  // DEVICE_STATUS_PARSER_HPP
