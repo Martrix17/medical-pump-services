@@ -8,26 +8,27 @@
 #include <chrono>
 #include <memory>
 
-#include "device/adapter/interface_device_adapter.hpp"
+#include "device/communication/interface_framer.hpp"
+#include "device/concurrency/concurrent_queue.hpp"
 
 using asio::ip::tcp;
 
 class TcpClient : public std::enable_shared_from_this<TcpClient> {
   public:
     static std::shared_ptr<TcpClient> create(asio::io_context& ioContext, std::string host,
-                                             unsigned short port, IDeviceAdapter& adapter);
+                                             unsigned short port, IFramer& framer,
+                                             ConcurrentQueue<std::string>& messageQueue);
 
     void start();
     void stop();
 
   private:
-    TcpClient(asio::io_context& ioContext, std::string host, unsigned short port,
-              IDeviceAdapter& adapter);
+    TcpClient(asio::io_context& ioContext, std::string host, unsigned short port, IFramer& framer,
+              ConcurrentQueue<std::string>& messageQueue);
 
     void connect();
     void scheduleReconnect();
     void read();
-    void processBuffer();
 
     tcp::socket socket_;
     tcp::resolver resolver_;
@@ -36,8 +37,9 @@ class TcpClient : public std::enable_shared_from_this<TcpClient> {
     std::string host_;
     unsigned short port_;
 
-    IDeviceAdapter& adapter_;
-    std::string receivedBuffer_;
+    IFramer& framer_;
+    ConcurrentQueue<std::string>& messageQueue_;
+
     std::array<char, 4096> readBuffer_;
 
     bool stopped_ = false;

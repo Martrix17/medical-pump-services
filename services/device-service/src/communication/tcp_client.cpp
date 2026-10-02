@@ -12,8 +12,10 @@
 #include <string>
 
 std::shared_ptr<TcpClient> TcpClient::create(asio::io_context& ioContext, std::string host,
-                                             unsigned short port, IDeviceAdapter& adapter) {
-    return std::shared_ptr<TcpClient>(new TcpClient(ioContext, std::move(host), port, adapter));
+                                             unsigned short port, IFramer& framer,
+                                             ConcurrentQueue<std::string>& messageQueue) {
+    return std::shared_ptr<TcpClient>(
+        new TcpClient(ioContext, std::move(host), port, framer, messageQueue));
 }
 
 void TcpClient::start() {
@@ -22,16 +24,19 @@ void TcpClient::start() {
 
 void TcpClient::stop() {
     stopped_ = true;
+
     asio::error_code ec;
     reconnectTimer_.cancel();
     socket_.cancel(ec);
     socket_.close(ec);
+
+    framer_.reset();
 }
 
 TcpClient::TcpClient(asio::io_context& ioContext, std::string host, unsigned short port,
-                     IDeviceAdapter& adapter)
+                     IFramer& framer, ConcurrentQueue<std::string>& messageQueue)
     : socket_(ioContext), resolver_(ioContext), reconnectTimer_(ioContext), host_(std::move(host)),
-      port_(port), adapter_(adapter) {}
+      port_(port), framer_(framer), messageQueue_(messageQueue) {}
 
 void TcpClient::connect() {
     if (stopped_) {
@@ -59,6 +64,7 @@ void TcpClient::connect() {
                         return;
                     }
                     reconnectDelay_ = std::chrono::seconds{1};
+
                     read();
                 });
         });
@@ -70,13 +76,17 @@ void TcpClient::scheduleReconnect() {
     }
 
     auto self = shared_from_this();
-    reconnectTimer_.expires_after(reconnectDelay_);
+
+    const auto delay = reconnectDelay_;
+
+    reconnectTimer_.expires_after(delay);
     reconnectTimer_.async_wait([this, self](const asio::error_code& ec) {
         if (ec == asio::error::operation_aborted) {
             return;
         }
-        reconnectDelay_ = std::min(reconnectDelay_ * 2, kMaxReconnectDelay_);
+
         connect();
+        reconnectDelay_ = std::min(reconnectDelay_ * 2, kMaxReconnectDelay_);
     });
 }
 
@@ -86,35 +96,28 @@ void TcpClient::read() {
     }
 
     auto self = shared_from_this();
-    socket_.async_read_some(asio::buffer(readBuffer_),
-                            [this, self](const asio::error_code& ec, std::size_t bytesTransferred) {
-                                if (ec) {
-                                    if (ec == asio::error::operation_aborted) {
-                                        std::cerr << "Read failed for " << host_ << ":" << port_
-                                                  << ": " << ec.message() << '\n';
+    socket_.async_read_some(asio::buffer(readBuffer_), [this, self](const asio::error_code& ec,
+                                                                    std::size_t bytesTransferred) {
+        if (ec) {
+            if (ec != asio::error::operation_aborted) {
+                std::cerr << "Read failed for " << host_ << ":" << port_ << ": " << ec.message()
+                          << '\n';
 
-                                        asio::error_code closeEc;
-                                        socket_.close(closeEc);
+                framer_.reset();
 
-                                        scheduleReconnect();
-                                    }
-                                    return;
-                                }
+                asio::error_code closeEc;
+                socket_.close(closeEc);
 
-                                receivedBuffer_.append(readBuffer_.data(), bytesTransferred);
-                                processBuffer();
-                                read();
-                            });
-}
+                scheduleReconnect();
+            }
+            return;
+        }
 
-void TcpClient::processBuffer() {
-    constexpr std::string_view delimiter = "\n";
+        for (auto message :
+             framer_.process(std::string_view(readBuffer_.data(), bytesTransferred))) {
+            messageQueue_.push(std::move(message));
+        }
 
-    std::size_t pos;
-    while ((pos = receivedBuffer_.find(delimiter)) != std::string::npos) {
-        std::string_view message(receivedBuffer_.data(), pos);
-        adapter_.processMessage(message);
-        // std::cout << "Processed message from " << adapter_.getDeviceID().value() << "\n";
-        receivedBuffer_.erase(0, pos + delimiter.size());
-    }
+        read();
+    });
 }
