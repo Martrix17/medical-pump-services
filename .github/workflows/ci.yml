@@ -101,7 +101,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build clang-format clang-tidy
+          sudo apt-get install -y ninja-build clang-tidy
 
       - name: Install Conan
         run: |
@@ -114,14 +114,14 @@ jobs:
           ninja --version
           conan --version
 
-      - name: Install dependencies
+      - name: Install Conan dependencies
         run: |
           conan install . \
             --output-folder=build/debug-tidy \
             --build=missing \
             -s build_type=Debug
 
-      - name: Configure CMake
+      - name: Configure with clang-tidy
         run: cmake --preset debug-tidy
 
       - name: Build with clang-tidy
