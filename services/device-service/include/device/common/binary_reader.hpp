@@ -1,6 +1,7 @@
 #ifndef BINARY_READER_HPP
 #define BINARY_READER_HPP
 
+#include <cstdint>
 #include <string_view>
 
 namespace binary {

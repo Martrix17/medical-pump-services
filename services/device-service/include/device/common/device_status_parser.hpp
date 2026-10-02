@@ -1,7 +1,6 @@
 #ifndef DEVICE_STATUS_PARSER_HPP
 #define DEVICE_STATUS_PARSER_HPP
 
-#include <cstdint>
 #include <string_view>
 
 #include "device/domain/state_enums.hpp"

@@ -5,7 +5,6 @@
 #include <optional>
 #include <string_view>
 
-
 using Timestamp = std::chrono::system_clock::time_point;
 
 namespace device::common {

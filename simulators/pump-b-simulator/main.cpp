@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
     try {
         asio::io_context ioContext;
-        PumpBMessageGenerator generator{1};
+        PumpBMessageGenerator generator{12345};
 
         TcpServer server(ioContext, port, generator);
         server.start();

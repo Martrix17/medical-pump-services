@@ -1,6 +1,7 @@
 #ifndef PUMP_B_MESSAGE_GENERATOR_HPP
 #define PUMP_B_MESSAGE_GENERATOR_HPP
 
+#include <cstdint>
 #include <optional>
 #include <random>
 #include <string>
