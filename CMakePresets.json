@@ -36,12 +36,10 @@
         {
             "name": "release",
             "displayName": "Release",
-            "generator": "Ninja",
+            "inherits": "base",
             "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "BUILD_TESTING": "ON",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/release/generators/conan_toolchain.cmake"
             }
         }
