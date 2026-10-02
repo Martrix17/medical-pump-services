@@ -2,8 +2,6 @@
 
 #include <nlohmann/json.hpp>
 
-#include "device/adapter/pump_b_message.hpp"
-
 std::optional<PumpAMessage> PumpAParser::parse(std::string_view rawMessage) {
     if (rawMessage.empty()) {
         return std::nullopt;
