@@ -1,6 +1,7 @@
 # CMake
 build/
 cmake-build-*/
+CMakeUserPresets.json
 
 # Conan
 .conan/
