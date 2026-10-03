@@ -4,7 +4,6 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
-#include <nlohmann/json.hpp>
 
 namespace {
 
@@ -33,11 +32,9 @@ void appendUint64BE(std::string& buffer, std::uint64_t value) {
 
 std::uint16_t calculateChecksum(std::string_view data) {
     std::uint16_t checksum = 0;
-
     for (const unsigned char byte : data) {
         checksum += byte;
     }
-
     return checksum;
 }
 
