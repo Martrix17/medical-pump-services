@@ -58,27 +58,27 @@ TEST(PumpBAdapterTest, StatusOnlyMessageYieldsSingleStatusEvent) {
     EXPECT_TRUE(std::holds_alternative<DeviceStatus>(events.front()));
 }
 
-TEST(PumpBAdapterTest, MeasurementOnlyMessageYieldsSingleMeasurementEvent) {
+TEST(PumpBAdapterTest, MeasurementOnlyMessageYieldsStatusMeasurementEvent) {
     PumpBAdapter adapter;
     const auto events = adapter.processMessage(
         buildFrame(PumpBMessageType::Measurement, PumpBStatus::Connected, 1.5F, 2.1F));
 
-    ASSERT_EQ(events.size(), 1U);
-    const auto* measurement = std::get_if<Measurement>(&events.front());
+    ASSERT_EQ(events.size(), 2U);  // Status + Measurement
+    const auto* measurement = std::get_if<Measurement>(&events.back());
     ASSERT_NE(measurement, nullptr);
     EXPECT_FLOAT_EQ(measurement->flowRate(), 1.5F);
     EXPECT_FLOAT_EQ(measurement->pressure(), 2.1F);
 }
 
-TEST(PumpBAdapterTest, AlarmOnlyMessageYieldsSingleAlarmEvent) {
+TEST(PumpBAdapterTest, AlarmOnlyMessageYieldsStatusAlarmEvent) {
     PumpBAdapter adapter;
     const auto events = adapter.processMessage(
         buildFrame(PumpBMessageType::Alarm, PumpBStatus::Connected,
                    std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
                    PumpBAlarmType::Occlusion, PumpBSeverity::Warning));
 
-    ASSERT_EQ(events.size(), 1U);
-    EXPECT_TRUE(std::holds_alternative<Alarm>(events.front()));
+    ASSERT_EQ(events.size(), 2U);  // Status + Measurement
+    EXPECT_TRUE(std::holds_alternative<Alarm>(events.back()));
 }
 
 TEST(PumpBAdapterTest, CorruptedChecksumYieldsNoEvents) {
@@ -106,5 +106,5 @@ TEST(PumpBAdapterTest, MeasurementTypeWithoutRealMeasurementYieldsNoEvents) {
     PumpBAdapter adapter;
     const auto events = adapter.processMessage(buildFrame(PumpBMessageType::Measurement));
 
-    EXPECT_TRUE(events.empty());
+    EXPECT_EQ(events.size(), 1U);  // Only Status event
 }

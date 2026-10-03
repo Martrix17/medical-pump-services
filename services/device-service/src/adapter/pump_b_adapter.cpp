@@ -44,7 +44,7 @@ DeviceID PumpBAdapter::getDeviceID() const {
 }
 
 std::optional<DeviceStatus> PumpBAdapter::getStatus() const {
-    if (!latestMessage_ || latestMessage_->type != PumpBMessageType::Status) {
+    if (!latestMessage_) {
         return std::nullopt;
     }
 
