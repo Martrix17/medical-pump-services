@@ -26,4 +26,5 @@ if(BUILD_TESTING)
     
     add_subdirectory(services/device-service/tests)
     add_subdirectory(simulators/tests)
+    add_subdirectory(tests/integration)
 endif()

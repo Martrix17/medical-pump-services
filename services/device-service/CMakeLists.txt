@@ -15,14 +15,17 @@ add_library(device-service-lib
 
     src/communication/fixed_size_framer.cpp
     src/communication/line_framer.cpp
+    src/communication/tcp_client.cpp
 
     src/concurrency/worker.cpp
-
+    
     src/domain/device_id.cpp
     src/domain/measurement.cpp
     src/domain/alarm.cpp
     src/domain/device_status.cpp
     src/domain/state_enums.cpp
+
+    src/event/console_event_sink.cpp
 )
 
 target_include_directories(device-service-lib
@@ -38,16 +41,14 @@ target_compile_features(device-service-lib
 target_link_libraries(device-service-lib
     PUBLIC
         nlohmann_json::nlohmann_json
+        asio::asio
 )
 
 add_executable(device-service
     src/main.cpp
-    src/communication/tcp_client.cpp
-    src/event/console_event_sink.cpp
 )
 
 target_link_libraries(device-service
     PRIVATE
         device-service-lib
-        asio::asio
 )
