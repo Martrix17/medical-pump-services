@@ -3,7 +3,6 @@
 #include <asio.hpp>
 #include <chrono>
 #include <cstdint>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
 #include <variant>
@@ -13,38 +12,8 @@
 #include "device/communication/tcp_client.hpp"
 #include "device/concurrency/concurrent_queue.hpp"
 #include "device/concurrency/worker.hpp"
+#include "pump_helper.hpp"
 #include "test_event_sink.hpp"
-
-namespace {
-
-using json = nlohmann::json;
-
-constexpr std::string_view validPumpAFrame = R"({
-    "device_id": "1234",
-    "timestamp": "2026-09-22T00:00:00Z",
-    "status": "Connected",
-    "measurement": {   
-        "flow_rate": 1.5,
-        "pressure": 2.1
-    }
-})";
-
-constexpr std::string_view invalidPumpAFrame = R"({
-    "device_id": "1234",
-    "timestamp": "2026-09-22T00:00:00Z",
-    "status": "Connected",
-    "measurement": {   
-        "flow_rate": "not-a-number",
-        "pressure": 2.1
-    }
-})";
-
-std::string makePumpAFrame(std::string_view rawMessage) {
-    json message = json::parse(rawMessage);
-    return message.dump() + "\n";
-}
-
-}  // namespace
 
 TEST(PumpAIntegrationTest, ValidMessageProducesMeasurementEvent) {
     asio::io_context ioContext;
@@ -75,7 +44,7 @@ TEST(PumpAIntegrationTest, ValidMessageProducesMeasurementEvent) {
 
     acceptor.accept(socket);
 
-    const auto frame = makePumpAFrame(validPumpAFrame);
+    const auto frame = helper::pumpA::makePumpAFrame(helper::pumpA::validPumpAFrame);
 
     asio::write(socket, asio::buffer(frame));
 
@@ -131,7 +100,7 @@ TEST(PumpAIntegrationTest, InvalidFrameDoesNotProduceEvent) {
 
     acceptor.accept(socket);
 
-    const auto frame = makePumpAFrame(invalidPumpAFrame);
+    const auto frame = helper::pumpA::makePumpAFrame(helper::pumpA::invalidPumpAFrame);
 
     // Send invalid frame.
     asio::write(socket, asio::buffer(frame));

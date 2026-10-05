@@ -3,8 +3,11 @@ find_package(asio REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
 add_executable(device-service-integration-tests
+    pump_helper.cpp
+
     pump_a_integration_test.cpp
     pump_b_integration_test.cpp
+    worker_lifecycle_integration_test.cpp
 )
 
 target_include_directories(device-service-integration-tests
