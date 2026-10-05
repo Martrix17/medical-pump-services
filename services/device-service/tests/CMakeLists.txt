@@ -17,6 +17,8 @@ add_executable(device-service-tests
     domain/alarm_test.cpp
     domain/event_test.cpp
     domain/device_status_test.cpp
+
+    kafka/event_serializer_test.cpp
 )
 
 target_link_libraries(device-service-tests

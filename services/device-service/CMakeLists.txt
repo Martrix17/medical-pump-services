@@ -26,6 +26,8 @@ add_library(device-service-lib
     src/domain/state_enums.cpp
 
     src/event/console_event_sink.cpp
+
+    src/kafka/event_serializer.cpp
 )
 
 target_include_directories(device-service-lib
