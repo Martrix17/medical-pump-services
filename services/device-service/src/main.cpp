@@ -45,7 +45,6 @@ int main(int argc, char** argv) {
 
     try {
         asio::io_context ioContext;
-
         asio::signal_set signals(ioContext, SIGINT, SIGTERM);
 
         ConcurrentQueue<std::string> messageQueue;
