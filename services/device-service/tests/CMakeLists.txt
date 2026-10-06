@@ -18,6 +18,7 @@ add_executable(device-service-tests
     domain/event_test.cpp
     domain/device_status_test.cpp
 
+    kafka/event_publisher_test.cpp
     kafka/event_serializer_test.cpp
 )
 

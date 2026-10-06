@@ -1,5 +1,6 @@
 find_package(nlohmann_json REQUIRED)
 find_package(asio REQUIRED)
+find_package(RdKafka REQUIRED)
 
 add_library(device-service-lib
     src/adapter/pump_a_adapter.cpp
@@ -27,6 +28,7 @@ add_library(device-service-lib
 
     src/event/console_event_sink.cpp
 
+    src/kafka/event_publisher.cpp
     src/kafka/event_serializer.cpp
 )
 
@@ -44,6 +46,7 @@ target_link_libraries(device-service-lib
     PUBLIC
         nlohmann_json::nlohmann_json
         asio::asio
+        RdKafka::rdkafka++
 )
 
 add_executable(device-service
