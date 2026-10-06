@@ -49,6 +49,17 @@ jobs:
           ninja --version
           conan --version
 
+<<<<<<< HEAD
+=======
+      - name: Create Docker network
+        run: |
+          docker network create medical-pump-network || true
+
+      - name: Start Kafka
+        run: |
+          docker compose up -d kafka
+
+>>>>>>> origin/main
       - name: Wait for Kafka
         run: | 
           echo "Waiting for Kafka..."
