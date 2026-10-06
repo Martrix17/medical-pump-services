@@ -74,6 +74,10 @@ jobs:
           ninja --version
           conan --version
 
+      - name: Create Docker network
+        run: |
+          docker network create medical-pump-network || true
+
       - name: Start Kafka
         run: |
           docker compose up -d kafka
