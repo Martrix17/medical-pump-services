@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     clangd \
     sudo \
     netcat-openbsd \
+    kafkacat \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \

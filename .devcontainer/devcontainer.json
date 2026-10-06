@@ -4,12 +4,17 @@
         "dockerfile": "Dockerfile",
         "context": ".."
     },
+
     "remoteUser": "developer",
     "updateRemoteUserUID": true,
     "workspaceFolder": "/workspace",
+
+    "runArgs": ["--network=medical-pump-network"],
+
     "mounts": [
         "source=${localWorkspaceFolder},target=/workspace,type=bind"
     ],
+
     "customizations": {
         "vscode": {
             "extensions": [
@@ -28,24 +33,8 @@
                 }
             }
         }
-        // "vscode": {
-        //     "settings": {
-        //         "editor.formatOnSave": true,
-        //         "C_Cpp.formatting": "clangFormat",
-        //         "C_Cpp.clang_format_style": "file",
-        //         "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-        //         "C_Cpp.codeAnalysis.clangTidy.path": "/usr/bin/clang-tidy",
-        //         "[cpp]": {
-        //             "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-        //             "editor.formatOnSave": true
-        //         },
-        //     },
-        //     "extensions": [
-        //         "llvm-vs-code-extensions.vscode-clangd",
-        //         // "ms-vscode.cpptools",
-        //         // "ms-vscode.cpptools-extension-pack",
-        //         "ms-vscode.cmake-tools"
-        //     ]
-        // }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
     }
 }
