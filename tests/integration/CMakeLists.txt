@@ -1,6 +1,7 @@
 find_package(GTest REQUIRED)
 find_package(asio REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(RdKafka REQUIRED)
 
 add_executable(device-service-integration-tests
     pump_helper.cpp
@@ -8,6 +9,7 @@ add_executable(device-service-integration-tests
     pump_a_integration_test.cpp
     pump_b_integration_test.cpp
     worker_lifecycle_integration_test.cpp
+    kafka_publisher_integration_test.cpp
 )
 
 target_include_directories(device-service-integration-tests
@@ -21,6 +23,7 @@ target_link_libraries(device-service-integration-tests
         GTest::gtest_main
         asio::asio
         nlohmann_json::nlohmann_json
+        RdKafka::rdkafka++
 )
 
 include(GoogleTest)
