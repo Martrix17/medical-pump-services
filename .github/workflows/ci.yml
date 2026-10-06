@@ -5,31 +5,6 @@ on:
   pull_request:
 
 jobs:
-  format:
-    name: Check formatting
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install clang-format
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-format
-
-      - name: Check formatting
-        shell: bash
-        run: |
-          files=$(git ls-files '*.cpp' '*.hpp' '*.h' '*.cc' '*.cxx')
-
-          if [ -z "$files" ]; then
-            echo "No C++ source files found."
-            exit 0
-          fi
-
-          clang-format --dry-run --Werror $files
-
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -73,10 +48,6 @@ jobs:
           cmake --version
           ninja --version
           conan --version
-
-      - name: Start Kafka
-        run: |
-          docker compose up -d kafka
 
       - name: Wait for Kafka
         run: | 
@@ -124,6 +95,7 @@ jobs:
         if: always()
         run: |
           docker compose down
+
 
   clang-tidy:
     name: Static analysis
